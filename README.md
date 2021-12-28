@@ -8,7 +8,7 @@ It can both create and restore backups.
 
 Think of settings like:
 * Skin preferences
-* Default lobby status (private or public)
+* If a lobby is open or closed by default
 * Disabling e-sports notification
 * League Voice settings
 * Audio settings
