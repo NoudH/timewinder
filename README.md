@@ -32,6 +32,7 @@ Install and build the application by running the following commands
 npm install
 npm run electron:build
 ```
+A build should appear in the `dist_electron` directory.
 
 ## FAQ
 
