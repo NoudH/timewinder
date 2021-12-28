@@ -5,6 +5,7 @@ import 'primevue/resources/themes/arya-blue/theme.css'; //theme
 import 'primevue/resources/primevue.min.css'; //core css
 import 'primeicons/primeicons.css'; //icons
 import 'primeflex/primeflex.css';
+import ConfirmationService from 'primevue/confirmationservice';
 import ScrollPanel from 'primevue/scrollpanel';
 import ProgressSpinner from 'primevue/progressspinner';
 import Panel from 'primevue/panel';
@@ -16,10 +17,12 @@ import AccordionTab from 'primevue/accordiontab';
 import Dialog from 'primevue/dialog';
 import InputText from "primevue/inputtext";
 import FileUpload from 'primevue/fileupload';
+import ConfirmDialog from 'primevue/confirmdialog';
 
 const app = createApp(App);
 
 app.use(PrimeVue, {ripple: true});
+app.use(ConfirmationService);
 
 app.component("ScrollPanel", ScrollPanel);
 app.component("ProgressSpinner", ProgressSpinner);
@@ -32,5 +35,6 @@ app.component("AccordionTab", AccordionTab);
 app.component("Dialog", Dialog);
 app.component("InputText", InputText);
 app.component("FileUpload", FileUpload);
+app.component("ConfirmDialog", ConfirmDialog);
 
 app.mount('#app');

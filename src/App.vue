@@ -4,7 +4,12 @@
     <Card class="p-br-0 main p-d-flex">
       <template #content>
         <Settings :settings="settings"/>
-        <BackupList :backups="backups"/>
+        <BackupList
+            :backups="backups"
+            v-on:reload-backups="readBackups"
+            v-on:create-backup="createBackup"
+            v-on:delete-backup="deleteBackup"
+        />
       </template>
     </Card>
   </div>
@@ -15,6 +20,8 @@ import fs from "fs";
 import ControlBar from "./components/ControlBar";
 import BackupList from "./components/BackupList";
 import Settings from "./components/Settings";
+import * as path from "path";
+import {format} from "date-fns";
 
 export default {
   name: 'App',
@@ -31,11 +38,39 @@ export default {
       }
     }
   },
-  created() {
-    fs.readdir("backups", (err, files) => {
-      this.backups = files;
-    })
+  methods: {
+    readBackups: function () {
+      fs.readdir("backups", (err, files) => {
+        this.backups = files;
+      })
+    },
+    createBackup: function () {
+      let date = format(new Date(), "yyyy-MM-dd HH-mm-ss")
 
+      if(!fs.existsSync(this.settings.leagueLocation)) {
+        //FIXME: show settings when League is not located
+      }
+
+      fs.mkdirSync( path.join("backups", date), { recursive: true });
+
+      fs.copyFileSync(
+          path.join(this.settings.leagueLocation, "Config", "LCUAccountPreferences.yaml"),
+          path.join("backups", date , "LCUAccountPreferences.yaml")
+      )
+      fs.copyFileSync(
+          path.join(this.settings.leagueLocation, "Config", "LCULocalPreferences.yaml"),
+          path.join("backups", date, "LCULocalPreferences.yaml")
+      )
+
+      this.backups.unshift(date);
+    },
+    deleteBackup: function (backup) {
+      fs.rmdirSync(path.join("backups", backup), { recursive: true })
+
+      this.backups = this.backups.filter(x => x !== backup);
+    }
+  },
+  created() {
     if(fs.existsSync("settings.json")) {
       Object.assign(
           this.settings,
@@ -44,6 +79,8 @@ export default {
           ) || {}
       )
     }
+
+    this.readBackups();
   }
 }
 </script>

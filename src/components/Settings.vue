@@ -1,12 +1,13 @@
 <template>
   <div class="p-fluid p-d-flex p-justify-end">
+    <Button icon="pi pi-github" class="p-button-text p-button-rounded p-button-plain" v-on:click="openWebPage('https://github.com/NoudH/timewinder')"/>
     <Button icon="pi pi-cog" class="p-button-text p-button-rounded p-button-plain" v-on:click="showSettings = !showSettings"/>
     <Dialog header="Settings" :draggable="false" v-model:visible="showSettings" :style="{width: '50vw'}">
       <div class="p-fluid">
         <div class="p-field">
           <label for="LeagueLocation">League of Legends folder</label>
           <div class="p-inputgroup">
-            <InputText id="LeagueLocation" placeholder="C:\Riot Games\League of Legends" :model-value="pr_settings.leagueLocation"/>
+            <InputText :disabled="true" id="LeagueLocation" placeholder="C:\Riot Games\League of Legends" :model-value="pr_settings.leagueLocation"/>
             <Button icon="pi pi-folder" v-on:click="openFileDialog"/>
           </div>
         </div>
@@ -20,7 +21,7 @@
 </template>
 
 <script>
-import {remote} from "electron";
+import {remote, shell} from "electron";
 import fs from "fs";
 
 export default {
@@ -50,6 +51,9 @@ export default {
         this.saving = false;
         this.showSettings = false;
       })
+    },
+    openWebPage: function (page) {
+      shell.openExternal(page);
     }
   },
 }
