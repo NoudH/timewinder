@@ -3,22 +3,48 @@
     <ControlBar/>
     <Card class="p-br-0 main p-d-flex">
       <template #content>
-        <HelloWorld/>
+        <Settings :settings="settings"/>
+        <BackupList :backups="backups"/>
       </template>
     </Card>
   </div>
 </template>
 
 <script>
-import HelloWorld from "./components/HelloWorld";
+import fs from "fs";
 import ControlBar from "./components/ControlBar";
+import BackupList from "./components/BackupList";
+import Settings from "./components/Settings";
 
 export default {
   name: 'App',
   components: {
+    Settings,
+    BackupList,
     ControlBar,
-    HelloWorld
   },
+  data() {
+    return {
+      backups: [],
+      settings: {
+        leagueLocation: ''
+      }
+    }
+  },
+  created() {
+    fs.readdir("backups", (err, files) => {
+      this.backups = files;
+    })
+
+    if(fs.existsSync("settings.json")) {
+      Object.assign(
+          this.settings,
+          JSON.parse(
+              fs.readFileSync("settings.json", {encoding: "utf-8", flag: "r"})
+          ) || {}
+      )
+    }
+  }
 }
 </script>
 
@@ -28,6 +54,15 @@ export default {
   overflow-y: auto;
   overflow-x: hidden;
   border-left: 1px solid #383838;
+  background: var(--surface-b) !important;
+}
+
+.main > .p-card-body {
+  width: 100%;
+}
+
+.main > .p-card-body > .p-card-content {
+  padding: 0 0 1rem 0;
 }
 
 /* width */
@@ -49,7 +84,7 @@ export default {
 
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-  background-color: var(--yellow-200);
+  background-color: var(--blue-400);
 }
 
 .p-br-0 {
