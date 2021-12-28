@@ -1,18 +1,28 @@
 <template>
   <div style="height: 100vh" class="p-d-flex p-flex-column">
     <ControlBar/>
+    <Toast class="p-mt-5"/>
     <Card class="p-br-0 main p-d-flex">
       <template #content>
-        <Settings :settings="settings"/>
+        <Settings :settings="settings" v-on:save-settings="saveSettings"/>
         <BackupList
             :backups="backups"
             v-on:reload-backups="readBackups"
             v-on:create-backup="createBackup"
             v-on:delete-backup="deleteBackup"
+            v-on:restore-backup="restoreBackup"
         />
       </template>
     </Card>
   </div>
+  <Dialog :modal="true" v-model:visible="showProgress" :show-header="false" :style="{width: '50vw'}">
+    <div class="p-d-flex p-justify-center">
+      <h2>Restoring backup...</h2>
+    </div>
+    <div class="p-d-flex p-justify-center">
+      <ProgressSpinner style="width:100px;height:100px"/>
+    </div>
+  </Dialog>
 </template>
 
 <script>
@@ -21,7 +31,9 @@ import ControlBar from "./components/ControlBar";
 import BackupList from "./components/BackupList";
 import Settings from "./components/Settings";
 import * as path from "path";
-import {format} from "date-fns";
+import yaml from "js-yaml";
+import axios from "axios";
+import {ipcRenderer} from "electron";
 
 export default {
   name: 'App',
@@ -32,46 +44,114 @@ export default {
   },
   data() {
     return {
+      showProgress: false,
       backups: [],
       settings: {
-        leagueLocation: ''
+        leagueLocation: '',
+        maxBackups: 5,
       }
     }
   },
   methods: {
     readBackups: function () {
       fs.readdir("backups", (err, files) => {
-        this.backups = files;
+        this.backups = files.sort().reverse();
       })
     },
     createBackup: function () {
-      let date = format(new Date(), "yyyy-MM-dd HH-mm-ss")
-
-      if(!fs.existsSync(this.settings.leagueLocation)) {
-        //FIXME: show settings when League is not located
-      }
-
-      fs.mkdirSync( path.join("backups", date), { recursive: true });
-
-      fs.copyFileSync(
-          path.join(this.settings.leagueLocation, "Config", "LCUAccountPreferences.yaml"),
-          path.join("backups", date , "LCUAccountPreferences.yaml")
-      )
-      fs.copyFileSync(
-          path.join(this.settings.leagueLocation, "Config", "LCULocalPreferences.yaml"),
-          path.join("backups", date, "LCULocalPreferences.yaml")
-      )
-
-      this.backups.unshift(date);
+      ipcRenderer.invoke("create-backup")
+          .then(backup => {
+            if(backup) {
+              this.backups.unshift(backup)
+              if (this.settings.maxBackups > 0 && this.backups.length > this.settings.maxBackups)
+                this.backups.pop();
+            }
+          })
+          .catch(e => this.$toast.add({severity: 'error', summary: 'Backup failed!', detail: e.message, life: 10000}))
     },
     deleteBackup: function (backup) {
-      fs.rmdirSync(path.join("backups", backup), { recursive: true })
+      fs.rmdirSync(path.join("backups", backup), {recursive: true})
 
       this.backups = this.backups.filter(x => x !== backup);
-    }
+    },
+    restoreBackup: async function (backup) {
+      if (fs.existsSync(path.join(this.settings.leagueLocation, "lockfile"))) {
+        try {
+          this.showProgress = true;
+          const lockfileData = fs.readFileSync(
+              path.join(this.settings.leagueLocation, "lockfile"),
+              {encoding: "utf-8"}
+          ).split(':');
+
+          const accountPrefs = yaml.load(
+              fs.readFileSync(
+                  path.join("backups", backup, "LCUAccountPreferences.yaml"),
+                  {encoding: "utf-8"}
+              )
+          )
+
+          const localPrefs = yaml.load(
+              fs.readFileSync(
+                  path.join("backups", backup, "LCULocalPreferences.yaml"),
+                  {encoding: "utf-8"}
+              )
+          )
+
+          let token = Buffer.from(`riot:${lockfileData[3]}`, 'ascii').toString("base64");
+
+          let promises = Promise.all(
+              Object.entries(accountPrefs).map(value => axios.put(
+                  `${lockfileData[4]}://127.0.0.1:${lockfileData[2]}/lol-settings/v1/account/${value[0]}`,
+                  value[1],
+                  {
+                    headers: {
+                      'Authorization': `Basic ${token}`
+                    }
+                  }
+              )).concat(
+                  Object.entries(localPrefs).map(value => axios.patch(
+                      `${lockfileData[4]}://127.0.0.1:${lockfileData[2]}/lol-settings/v2/local/${value[0]}`,
+                      value[1],
+                      {
+                        headers: {
+                          'Authorization': `Basic ${token}`
+                        }
+                      }
+                  ))
+              )
+          );
+
+          await promises;
+
+          this.showProgress = false;
+
+          this.$toast.add({
+            severity: 'success',
+            summary: 'Backup restored',
+            detail: "The backup has successfully been restored!",
+            life: 5000
+          });
+        } catch (e) {
+          this.showProgress = false;
+        }
+      } else {
+        this.$toast.add({
+          severity: 'error',
+          summary: 'League client unavailable!',
+          detail: "The League client needs to be running in order to restore backups!",
+          life: 5000
+        });
+        this.showProgress = false;
+      }
+    },
+    saveSettings: function (newSettings) {
+      fs.writeFileSync("settings.json", JSON.stringify(newSettings), () => {
+      });
+      this.settings = newSettings;
+    },
   },
   created() {
-    if(fs.existsSync("settings.json")) {
+    if (fs.existsSync("settings.json")) {
       Object.assign(
           this.settings,
           JSON.parse(

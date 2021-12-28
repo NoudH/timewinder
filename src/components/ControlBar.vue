@@ -30,6 +30,7 @@ export default {
 <style scoped>
 .toolbar {
   -webkit-app-region: drag;
+  z-index: 9999999;
 }
 
 .toolbar * {

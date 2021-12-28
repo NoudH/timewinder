@@ -6,14 +6,17 @@
       <Button icon="pi pi-refresh" class="p-button-text p-button-rounded p-button-plain" v-on:click="$emit('reload-backups')"/>
     </div>
   </div>
-  <Accordion class="" v-if="backups.length > 0">
-    <AccordionTab v-for="backup in backups" :key="backup" :header="backup">
-      <div class="p-d-flex p-jc-end">
-        <Button icon="pi pi-trash" label="Delete" class="p-button-outlined p-button-danger p-mr-2" v-on:click="confirmDelete(backup)"/>
-        <Button icon="pi pi-sync" label="Restore" class="p-button-outlined p-button-success"/>
-      </div>
-    </AccordionTab>
-  </Accordion>
+  <div v-if="backups.length > 0">
+    <Accordion class="">
+      <AccordionTab v-for="backup in backups" :key="backup" :header="backup">
+        <div class="p-d-flex p-jc-end">
+          <Button icon="pi pi-trash" label="Delete" class="p-button-outlined p-button-danger p-mr-2" v-on:click="confirmDelete(backup)"/>
+          <Button icon="pi pi-sync" label="Restore" class="p-button-outlined p-button-success" v-on:click="confirmRestore(backup)"/>
+        </div>
+      </AccordionTab>
+    </Accordion>
+    <Button icon="pi pi-plus" label="Backup" class="p-mt-2" v-on:click="$emit('create-backup')"/>
+  </div>
   <Card v-else>
     <template #content>
       <div class="p-d-flex p-justify-center">
@@ -33,16 +36,30 @@ export default {
   props: {
     backups: Array
   },
-  emits: ["reload-backups", "create-backup"],
+  emits: [
+    "reload-backups",
+    "create-backup",
+    "restore-backup",
+    "delete-backup"
+  ],
   methods: {
     confirmDelete: function (backup) {
-      console.log(backup);
       this.$confirm.require({
         message: `Are you sure you want to delete backup '${backup}'?`,
-        header: 'Confirmation',
+        header: 'Delete backup',
         icon: 'pi pi-exclamation-triangle',
         accept: () => {
           this.$emit('delete-backup', backup);
+        },
+      });
+    },
+    confirmRestore: function (backup) {
+      this.$confirm.require({
+        message: `Are you sure you want to restore to backup '${backup}'?`,
+        header: 'Restore backup',
+        icon: 'pi pi-exclamation-triangle',
+        accept: () => {
+          this.$emit('restore-backup', backup);
         },
       });
     },

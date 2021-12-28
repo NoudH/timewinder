@@ -4,12 +4,18 @@ import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer'
 import fs from "fs";
 import path from "path";
+import {format} from "date-fns";
+
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { secure: true, standard: true } }
 ])
+
+// The League client uses self signed SSL certificates, so we have to disable some security checks.
+app.commandLine.appendSwitch('allow-insecure-localhost', 'true');
+app.commandLine.appendSwitch('ignore-certificate-errors', 'true');
 
 async function createWindow() {
 
@@ -25,7 +31,8 @@ async function createWindow() {
       // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
       nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
       contextIsolation: !process.env.ELECTRON_NODE_INTEGRATION,
-      enableRemoteModule: true
+      enableRemoteModule: true,
+      webSecurity: false // Disable CORS
     }
   })
 
@@ -38,6 +45,20 @@ async function createWindow() {
     // Load the index.html when not in development
     win.loadURL('app://./index.html')
   }
+}
+
+let settings = {
+  leagueLocation: '',
+  maxBackups: 5,
+}
+
+if (fs.existsSync("settings.json")) {
+  Object.assign(
+      settings,
+      JSON.parse(
+          fs.readFileSync("settings.json", {encoding: "utf-8", flag: "r"})
+      ) || {}
+  )
 }
 
 ipcMain.on('close', () => {
@@ -55,6 +76,37 @@ ipcMain.on('maximize', () => {
 
 ipcMain.on('minimize', () => {
   BrowserWindow.getFocusedWindow().minimize();
+})
+
+ipcMain.handle('create-backup', () => {
+  let date = format(new Date(), "yyyy-MM-dd HH-mm-ss")
+
+  if(fs.existsSync(path.join("backups", date))) {
+    return;
+  }
+
+  try {
+    fs.mkdirSync(path.join("backups", date), {recursive: true});
+
+    fs.copyFileSync(
+        path.join(settings.leagueLocation, "Config", "LCUAccountPreferences.yaml"),
+        path.join("backups", date, "LCUAccountPreferences.yaml")
+    )
+    fs.copyFileSync(
+        path.join(settings.leagueLocation, "Config", "LCULocalPreferences.yaml"),
+        path.join("backups", date, "LCULocalPreferences.yaml")
+    )
+
+    let backups = fs.readdirSync("backups").sort().reverse();
+    if(settings.maxBackups > 0 && backups.length > settings.maxBackups) {
+      fs.rmdirSync(path.join("backups", backups[settings.maxBackups]), {recursive: true})
+    }
+
+    return date
+  } catch (e) {
+    fs.rmdirSync(path.join("backups", date), {recursive: true})
+    throw e;
+  }
 })
 
 // Quit when all windows are closed.

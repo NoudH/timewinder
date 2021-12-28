@@ -7,14 +7,21 @@
         <div class="p-field">
           <label for="LeagueLocation">League of Legends folder</label>
           <div class="p-inputgroup">
-            <InputText :disabled="true" id="LeagueLocation" placeholder="C:\Riot Games\League of Legends" :model-value="pr_settings.leagueLocation"/>
+            <InputText :disabled="true" id="LeagueLocation" placeholder="C:\Riot Games\League of Legends" v-model="pr_settings.leagueLocation"/>
             <Button icon="pi pi-folder" v-on:click="openFileDialog"/>
           </div>
+          <br>
+          <label for="MaxBackups">Max backups</label>
+          <InputNumber id="MaxBackups" placeholder="0" :min="0" v-model="pr_settings.maxBackups" showButtons/>
         </div>
       </div>
       <template #footer>
         <Button label="Cancel" icon="pi pi-times" class="p-button-text" v-on:click="showSettings = false"/>
-        <Button :disabled="saving" label="Save" :icon="saving ? 'pi pi-spin pi-spinner' : 'pi pi-save'" autofocus v-on:click="saveSettings"/>
+        <Button
+            label="Save" :icon="'pi pi-save'"
+            v-on:click="() => {$emit('save-settings', pr_settings); this.showSettings = false;}"
+            autofocus
+        />
       </template>
     </Dialog>
   </div>
@@ -22,18 +29,17 @@
 
 <script>
 import {remote, shell} from "electron";
-import fs from "fs";
 
 export default {
   name: "Settings",
   props: {
     settings: Object
   },
+  emits: ["save-settings"],
   data() {
     return {
       pr_settings: this.settings,
       showSettings: false,
-      saving: false,
     }
   },
   methods: {
@@ -44,13 +50,6 @@ export default {
             this.pr_settings.leagueLocation = response.filePaths[0]
           }
         });
-    },
-    saveSettings: function () {
-      this.saving = true;
-      fs.writeFile("settings.json", JSON.stringify(this.pr_settings), () => {
-        this.saving = false;
-        this.showSettings = false;
-      })
     },
     openWebPage: function (page) {
       shell.openExternal(page);

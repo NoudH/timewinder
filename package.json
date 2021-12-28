@@ -15,12 +15,13 @@
   },
   "main": "background.js",
   "dependencies": {
+    "axios": "^0.24.0",
     "core-js": "^3.6.5",
     "date-fns": "^2.27.0",
+    "js-yaml": "^4.1.0",
     "primeflex": "^2.0.0",
     "primeicons": "^5.0.0",
     "primevue": "^3.10.0",
-    "ps-node": "^0.1.6",
     "vue": "^3.0.0"
   },
   "devDependencies": {
