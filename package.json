@@ -1,6 +1,6 @@
 {
   "name": "timewinder",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "A backup tool for the League of Legends client settings",
   "author": "Noud-H",
