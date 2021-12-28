@@ -48,7 +48,7 @@ async function createWindow() {
 }
 
 let settings = {
-  leagueLocation: '',
+  leagueLocation: 'C:\\Riot Games\\League of Legends',
   maxBackups: 5,
 }
 

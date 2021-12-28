@@ -47,7 +47,7 @@ export default {
       showProgress: false,
       backups: [],
       settings: {
-        leagueLocation: '',
+        leagueLocation: 'C:\\Riot Games\\League of Legends',
         maxBackups: 5,
       }
     }
