@@ -1,8 +1,8 @@
 {
-  "name": "league-client-backup-tool",
+  "name": "timewinder",
   "version": "0.1.0",
   "private": true,
-  "description": "A backup tool for the League of Legends client",
+  "description": "A backup tool for the League of Legends client settings",
   "author": "Noud-H",
   "scripts": {
     "serve": "vue-cli-service serve",
