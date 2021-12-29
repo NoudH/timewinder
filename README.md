@@ -4,7 +4,7 @@
 ## What?
 
 Timewinder is backup tool for the settings of the League of Legends client.
-It can both create and restore backups.
+It can both restore and (automatically) create backups.
 
 Think of settings like:
 * Skin preferences
