@@ -7,6 +7,8 @@ import path from "path";
 import {format} from "date-fns";
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
+const cmdArgs = process.argv.slice(2);
+const rootPath = isDevelopment ? '' : path.dirname(process.execPath);
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
@@ -18,6 +20,10 @@ app.commandLine.appendSwitch('allow-insecure-localhost', 'true');
 app.commandLine.appendSwitch('ignore-certificate-errors', 'true');
 
 async function createWindow() {
+
+  if(cmdArgs.includes('--headless')) {
+    return;
+  }
 
   // Create the browser window.
   const win = new BrowserWindow({
@@ -52,14 +58,18 @@ let settings = {
   maxBackups: 5,
 }
 
-if (fs.existsSync("settings.json")) {
-  Object.assign(
-      settings,
-      JSON.parse(
-          fs.readFileSync("settings.json", {encoding: "utf-8", flag: "r"})
-      ) || {}
-  )
+function readSettings() {
+  if (fs.existsSync(path.join(rootPath, "settings.json"))) {
+    Object.assign(
+        settings,
+        JSON.parse(
+            fs.readFileSync(path.join(rootPath, "settings.json"), {encoding: "utf-8", flag: "r"})
+        ) || {}
+    )
+  }
 }
+
+readSettings();
 
 ipcMain.on('close', () => {
   BrowserWindow.getFocusedWindow().close();
@@ -79,41 +89,18 @@ ipcMain.on('minimize', () => {
 })
 
 ipcMain.handle('create-backup', () => {
-  let date = format(new Date(), "yyyy-MM-dd HH-mm-ss")
+  return createBackup();
+})
 
-  if(fs.existsSync(path.join("backups", date))) {
-    return;
-  }
-
-  try {
-    fs.mkdirSync(path.join("backups", date), {recursive: true});
-
-    fs.copyFileSync(
-        path.join(settings.leagueLocation, "Config", "LCUAccountPreferences.yaml"),
-        path.join("backups", date, "LCUAccountPreferences.yaml")
-    )
-    fs.copyFileSync(
-        path.join(settings.leagueLocation, "Config", "LCULocalPreferences.yaml"),
-        path.join("backups", date, "LCULocalPreferences.yaml")
-    )
-
-    let backups = fs.readdirSync("backups").sort().reverse();
-    if(settings.maxBackups > 0 && backups.length > settings.maxBackups) {
-      fs.rmdirSync(path.join("backups", backups[settings.maxBackups]), {recursive: true})
-    }
-
-    return date
-  } catch (e) {
-    fs.rmdirSync(path.join("backups", date), {recursive: true})
-    throw e;
-  }
+ipcMain.on('save-settings', () => {
+  readSettings();
 })
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
   // On macOS it is common for applications and their menu bar
   // to stay active until the user quits explicitly with Cmd + Q
-  if (process.platform !== 'darwin') {
+  if (process.platform !== 'darwin' && !cmdArgs.includes("--headless")) {
     app.quit()
   }
 })
@@ -156,4 +143,40 @@ if (isDevelopment) {
 
 if (!fs.existsSync( "backups")){
   fs.mkdirSync("backups");
+}
+
+if(cmdArgs.includes("--create-backup")) {
+  createBackup();
+  app.quit();
+}
+
+function createBackup() {
+  let date = format(new Date(), "yyyy-MM-dd HH-mm-ss")
+
+  if(fs.existsSync(path.join(rootPath, "backups", date))) {
+    return;
+  }
+
+  try {
+    fs.mkdirSync(path.join(rootPath, "backups", date), {recursive: true});
+
+    fs.copyFileSync(
+        path.join(settings.leagueLocation, "Config", "LCUAccountPreferences.yaml"),
+        path.join(rootPath, "backups", date, "LCUAccountPreferences.yaml")
+    )
+    fs.copyFileSync(
+        path.join(settings.leagueLocation, "Config", "LCULocalPreferences.yaml"),
+        path.join(rootPath, "backups", date, "LCULocalPreferences.yaml")
+    )
+
+    let backups = fs.readdirSync(path.join(rootPath, "backups")).sort().reverse();
+    if(settings.maxBackups > 0 && backups.length > settings.maxBackups) {
+      fs.rmdirSync(path.join(rootPath, "backups", backups[settings.maxBackups]), {recursive: true})
+    }
+
+    return date
+  } catch (e) {
+    fs.rmdirSync(path.join(rootPath, "backups", date), {recursive: true})
+    throw e;
+  }
 }

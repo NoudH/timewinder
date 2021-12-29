@@ -13,6 +13,38 @@
           <br>
           <label for="MaxBackups">Max backups</label>
           <InputNumber id="MaxBackups" placeholder="0" :min="0" v-model="pr_settings.maxBackups" showButtons/>
+          <br>
+          <br>
+          <label for="AutomaticBackups">Automatic Backups</label>
+          <br>
+          <InputSwitch
+              id="AutomaticBackups"
+              v-model="pr_settings.automaticBackups.enabled"
+              :disabled="!pr_isAdmin"
+          />
+          <div v-if="pr_settings.automaticBackups.enabled">
+            <br>
+            <label for="AutomaticBackups_Frequency">Frequency</label>
+            <Dropdown
+                id="AutomaticBackups_Frequency"
+                v-model="pr_settings.automaticBackups.frequency"
+                :options="automaticOptions"
+                optionLabel="name"
+                placeholder="Automatic backups"
+                :disabled="!pr_isAdmin"
+            />
+            <br>
+            <label for="AutomaticBackups_Time">Time</label>
+            <InputMask
+                id="AutomaticBackups_Time"
+                v-model="pr_settings.automaticBackups.time"
+                mask="99:99"
+                placeholder="18:00"
+                :disabled="!pr_isAdmin"
+            />
+          </div>
+          <br>
+          <span v-if="!pr_isAdmin" style="font-size: small; color: var(--text-color-secondary)"><i>(Requires Admin privileges)</i></span>
         </div>
       </div>
       <template #footer>
@@ -29,6 +61,7 @@
 
 <script>
 import {remote, shell} from "electron";
+import {exec} from "child_process";
 
 export default {
   name: "Settings",
@@ -38,8 +71,14 @@ export default {
   emits: ["save-settings"],
   data() {
     return {
-      pr_settings: this.settings,
+      pr_settings: JSON.parse(JSON.stringify(this.settings)),
+      pr_isAdmin: false,
       showSettings: false,
+      automaticOptions: [
+        {name: "Daily", frequency: "DAILY"},
+        {name: "Weekly", frequency: "WEEKLY"},
+        {name: "Monthly", frequency: "MONTHLY"},
+      ]
     }
   },
   methods: {
@@ -53,8 +92,13 @@ export default {
     },
     openWebPage: function (page) {
       shell.openExternal(page);
-    }
+    },
   },
+  created() {
+    exec('NET SESSION', null, (error, stdout, stderr) => {
+      this.pr_isAdmin = (stderr.length === 0);
+    })
+  }
 }
 </script>
 

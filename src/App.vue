@@ -34,6 +34,7 @@ import * as path from "path";
 import yaml from "js-yaml";
 import axios from "axios";
 import {ipcRenderer} from "electron";
+import {execSync} from "child_process";
 
 export default {
   name: 'App',
@@ -46,9 +47,15 @@ export default {
     return {
       showProgress: false,
       backups: [],
+      //Default settings
       settings: {
         leagueLocation: 'C:\\Riot Games\\League of Legends',
         maxBackups: 5,
+        automaticBackups: {
+          enabled: false,
+          time: "18:00",
+          frequency: null
+        }
       }
     }
   },
@@ -61,7 +68,7 @@ export default {
     createBackup: function () {
       ipcRenderer.invoke("create-backup")
           .then(backup => {
-            if(backup) {
+            if (backup) {
               this.backups.unshift(backup)
               if (this.settings.maxBackups > 0 && this.backups.length > this.settings.maxBackups)
                 this.backups.pop();
@@ -145,9 +152,41 @@ export default {
       }
     },
     saveSettings: function (newSettings) {
-      fs.writeFileSync("settings.json", JSON.stringify(newSettings), () => {
-      });
-      this.settings = newSettings;
+      if (JSON.stringify(newSettings.automaticBackups) !== JSON.stringify(this.settings.automaticBackups)){
+        try {
+          if (newSettings.automaticBackups?.enabled) {
+            execSync(`schtasks /Create /RU SYSTEM /TN timewinder /TR "'${path.resolve('.', 'timewinder.exe')}' --headless --create-backup"`
+                + ` /SC ${newSettings.automaticBackups.frequency.frequency} /ST ${newSettings.automaticBackups.time} /F`)
+            this.$toast.add({
+              severity: 'success',
+              summary: 'Automatic backups setup',
+              detail: 'Automatic backups have been setup successfully.',
+              life: 5000
+            });
+          } else {
+            execSync(`schtasks /Delete /TN timewinder /F`);
+            this.$toast.add({
+              severity: 'success',
+              summary: 'Automatic backups disabled',
+              detail: 'Automatic backups have been disabled successfully.',
+              life: 5000
+            });
+          }
+        } catch (e) {
+          this.$toast.add({
+            severity: 'error',
+            summary: 'An error has occurred with Automatic backups!',
+            detail: e.message,
+            life: 5000
+          });
+          throw e;
+        }
+      }
+
+      fs.writeFileSync("settings.json", JSON.stringify(newSettings), () => {});
+
+      this.settings = JSON.parse(JSON.stringify(newSettings));
+      ipcRenderer.send("save-settings");
     },
   },
   created() {

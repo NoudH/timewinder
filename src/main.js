@@ -22,7 +22,9 @@ import InputNumber from "primevue/inputnumber";
 import FileUpload from 'primevue/fileupload';
 import ConfirmDialog from 'primevue/confirmdialog';
 import Toast from 'primevue/toast';
-import ProgressBar from "primevue/progressbar";
+import Dropdown from 'primevue/dropdown';
+import InputSwitch from 'primevue/inputswitch';
+import InputMask from "primevue/inputmask";
 
 const app = createApp(App);
 
@@ -41,9 +43,11 @@ app.component("AccordionTab", AccordionTab);
 app.component("Dialog", Dialog);
 app.component("InputText", InputText);
 app.component("InputNumber", InputNumber);
+app.component("InputSwitch", InputSwitch);
+app.component("InputMask", InputMask);
 app.component("FileUpload", FileUpload);
 app.component("ConfirmDialog", ConfirmDialog);
 app.component("Toast", Toast);
-app.component("ProgressBar", ProgressBar);
+app.component("Dropdown", Dropdown);
 
 app.mount('#app');
