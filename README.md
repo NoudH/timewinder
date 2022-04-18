@@ -37,7 +37,7 @@ A build should appear in the `dist_electron` directory.
 ## FAQ
 
 ### Is this approved by Riot?
-Timewinder conforms to both the [general Riot Developer policies](https://developer.riotgames.com/policies.html) and the [League Client development policies](https://developer.riotgames.com/league-client-apis.html).
+Timewinder conforms to both the [general Riot Developer policies](https://developer.riotgames.com/policies.html) and the [League Client development policies](https://developer.riotgames.com/league-client-apis.html) and it is registered and approved on Riot's developer portal.
 While this doesn't mean that Riot explicitly approves the application or supports it in any way, it makes it increasingly unlikely that using this application will risk your account.
 [This comment by RiotSargonas](https://www.reddit.com/r/leagueoflegends/comments/80d4r0/runebook_the_ultimate_rune_pages_manager_that_you/duv2r22/) explains more about Riot's approach to applications like this one.
 
