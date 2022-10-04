@@ -10,6 +10,7 @@
     <Accordion class="">
       <AccordionTab v-for="backup in backups" :key="backup" :header="backup">
         <div class="p-d-flex p-jc-end">
+          <Button icon="pi pi-folder-open" label="Open in folder" class="p-button-outlined p-button-warning p-mr-2" v-on:click="$emit('open-folder', backup)"/>
           <Button icon="pi pi-trash" label="Delete" class="p-button-outlined p-button-danger p-mr-2" v-on:click="confirmDelete(backup)"/>
           <Button icon="pi pi-sync" label="Restore" class="p-button-outlined p-button-success" v-on:click="confirmRestore(backup)"/>
         </div>
@@ -40,7 +41,8 @@ export default {
     "reload-backups",
     "create-backup",
     "restore-backup",
-    "delete-backup"
+    "delete-backup",
+    "open-folder"
   ],
   methods: {
     confirmDelete: function (backup) {

@@ -1,5 +1,5 @@
 'use strict'
-import { app, protocol, BrowserWindow, ipcMain } from 'electron'
+import {app, protocol, BrowserWindow, ipcMain, shell} from 'electron'
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer'
 import fs from "fs";
@@ -90,6 +90,10 @@ ipcMain.on('minimize', () => {
 
 ipcMain.handle('create-backup', () => {
   return createBackup();
+})
+
+ipcMain.handle('open-folder', (event, backup) => {
+  shell.showItemInFolder(path.join(rootPath, "backups", backup, "LCUAccountPreferences.yaml"))
 })
 
 ipcMain.on('save-settings', () => {

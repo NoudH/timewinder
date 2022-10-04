@@ -11,6 +11,7 @@
             v-on:create-backup="createBackup"
             v-on:delete-backup="deleteBackup"
             v-on:restore-backup="restoreBackup"
+            v-on:open-folder="openInFolder"
         />
       </template>
     </Card>
@@ -60,6 +61,9 @@ export default {
     }
   },
   methods: {
+    openInFolder: function (backup) {
+      ipcRenderer.invoke("open-folder", backup)
+    },
     readBackups: function () {
       fs.readdir("backups", (err, files) => {
         this.backups = files.sort().reverse();
